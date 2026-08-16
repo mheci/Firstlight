@@ -1,0 +1,64 @@
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
+# image will be published to ghcr.io/<user>/<name>
+name: firstlight
+# description will be included in the image's metadata
+description: My personal Fedora image with NVIDIA open drivers and CUDA, built with BlueBuild.
+
+# the base image to build on top of (FROM) and the version tag to use
+base-image: ghcr.io/blue-build/base-images/fedora-base
+image-version: "44" # pinned to Fedora 44 to match the fedora44 NVIDIA repos and avoid future breakage
+
+# module configuration, executed in order
+# you can include multiple instances of the same module
+modules:
+  - type: files
+    files:
+      - source: system
+        destination: / # copies files/system/* (* means everything inside it) into your image's root folder /
+
+  - type: dnf
+    repos:
+      copr:
+        - atim/starship
+        - imput/helium
+      files:
+        - https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
+        - https://developer.download.nvidia.com/compute/cuda/repos/fedora44/x86_64/cuda-fedora44.repo
+      keys:
+        - https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
+        - https://developer.download.nvidia.com/compute/cuda/repos/fedora44/x86_64/73CD9B30.pub
+    install:
+      packages:
+        - micro
+        - starship
+        - brave-origin
+        - helium-bin
+        # kernel headers/devel for building kernel modules; required by NVIDIA driver install
+        - kernel-devel-matched
+        - kernel-headers
+        # NVIDIA driver (open kernel modules) + CUDA toolkit per NVIDIA Fedora docs
+        - nvidia-open
+        - cuda-toolkit
+        - gcc
+        - gcc-c++
+        # OpenCL loader + Khronos headers (NVIDIA's ICD ships with the driver)
+        - ocl-icd
+        - opencl-headers
+        # NVIDIA utilities (nvidia-smi ships inside nvidia-open)
+        - nvidia-settings
+        - nvidia-persistenced
+        - nvidia-modprobe
+        - nvidia-xconfig
+        # monitoring
+        - nvtop
+        - btop
+
+  - type: kargs
+    kargs:
+      - rd.driver.blacklist=nouveau
+      - modprobe.blacklist=nouveau
+      - nvidia-drm.modeset=1
+      - nvidia-drm.fbdev=1
+
+  - type: signing # this sets up the proper policy & signing files for signed images to work fully
