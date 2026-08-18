@@ -31,6 +31,15 @@ jobs:
           # !! Add your recipes here
           - recipe.yml
     steps:
+      # MOK signing key for the CachyOS kernel (Secure Boot). base64 PEM in the
+      # FIRSTLIGHT_MOK_KEY secret; the files module ships it into the image, and
+      # install-kernel-cachyos.sh signs the kernel + modules at build time.
+      - name: Inject MOK signing key
+        run: |
+          if [ -n "${{ secrets.FIRSTLIGHT_MOK_KEY }}" ]; then
+            mkdir -p files/system/etc/pki/firstlight-mok
+            echo "${{ secrets.FIRSTLIGHT_MOK_KEY }}" | base64 -d > files/system/etc/pki/firstlight-mok/priv.pem
+          fi
       # the build is fully handled by the reusable github action
       - name: Build Custom Image
         uses: blue-build/github-action@836161eb076426a451e6a0054f722b1153b8b3ad # v1.12.0

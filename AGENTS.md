@@ -7,9 +7,11 @@ Working instructions for AI agents and contributors on this repository. This is 
 A personal, gaming/creative/AI-focused Fedora 44 atomic desktop:
 
 - **Budgie Desktop 10.10.2** — Wayland-ONLY session (no X session), compositor is **labwc 0.9.6** (`startbudgielabwc` → `labwc --config-dir ~/.config/budgie-desktop/labwc -S budgie-desktop`).
-- **NVIDIA open drivers + CUDA toolkit** from the NVIDIA fedora44 repo; **Terra mesa** (preferred over Fedora's, epoch-0 vs epoch-1).
+- **NVIDIA open drivers (DKMS) + CUDA toolkit** from the NVIDIA fedora44 repo; **Terra mesa** (preferred over Fedora's, epoch-0 vs epoch-1).
+- **Kernel**: CachyOS kernel (COPR `bieszczaders/kernel-cachyos`) signed with a persistent MOK key at build time; stock Fedora kernel kept as signed fallback.
 - **Terra (repos.fyralabs.com) is the PRIMARY package source**; Fedora base and RPM Fusion (repos only) are fallbacks.
-- Gaming: Steam, Proton-CachyOS, umu, faugus-launcher, ScopeBuddy, scx schedulers, bpftune-nightly, ananicy-cpp, NTSync, gamescope-ready labwc.
+- Gaming: Steam, Proton-CachyOS, umu, faugus-launcher, ScopeBuddy, stable scx schedulers + scx-manager, terra-gamescope, ananicy-cpp, NTSync, gamescope-ready labwc.
+- Reliability: greenboot (greenboot-rs) health checks + auto-rollback after 3 failed boots.
 - AI: CUDA llama.cpp (conda-forge), Open WebUI (quadlet container), Hermes, Unsloth, glance.
 - **Native-only policy**: Flatpak is banned except as an absolute last resort; everything comes from Terra/Fedora, tarballs, AppImage extraction, or source builds.
 
@@ -19,14 +21,14 @@ A personal, gaming/creative/AI-focused Fedora 44 atomic desktop:
 2. **Never run local builds/downloads of the image** in this session. Lightweight verification via `gh api`/`gh run`/`gh workflow run`, webfetch, or subagent research is allowed.
 3. **Never guess — verify.** Before assuming any package/version/behavior, confirm against official docs, package repos (packages.fedoraproject.org, terrapkg github, COPR API), or a research subagent. Cite sources.
 4. **Poll CI at intervals ≤ 2 minutes.** Never longer.
-5. **No secrets.** The `SIGNING_SECRET` lives in GitHub secrets (and a local key dir); never print or commit it. Remind the user to revoke any exposed PAT when wrapping up.
+5. **No secrets.** `SIGNING_SECRET` and `FIRSTLIGHT_MOK_KEY` live in GitHub secrets (MOK private key also local-only, gitignored); never print or commit them. Remind the user to revoke any exposed PAT when wrapping up.
 6. **Never add comments to code unless they add real context** (this repo's scripts use concise purpose comments — match that style).
 7. **Never remove the `example.sh` template** and preserve exec bits on all scripts.
 
 ## Engineering values & priorities
 
 1. **Native-first packaging.** Prefer, in order: Terra → Fedora base → RPM Fusion repos → official release tarball/AppImage extraction → source build. Only use Flatpak if no reliable native path exists.
-2. **Always-latest tools where possible** (nightly/git builds: scx-*, yt-dlp-git, mpv-nightly, bpftune-nightly; bun-installed pi). Pin only when upstream has no rolling channel.
+2. **Stable-over-nightly (per user decision).** All Terra/Fedora nightlies were replaced with stable packages: yt-dlp + mpv from Fedora, scx-scheds/scx-tools stable from Terra, scx-manager from the CachyOS addons COPR; bpftune-nightly was **dropped** (no stable bpftune exists in Fedora or Terra). bun-installed pi stays. Pin only when upstream has no stable channel.
 3. **bootc/atomic correctness.** The image is built inside a container **with no running systemd**:
    - `systemctl daemon-reload`, `systemctl start`, and quadlet enables will FAIL at build time.
    - `systemctl enable <regular-unit>` works offline (symlink ops). For quadlet units, create the enable symlink manually (`ln -sf <name>.container → /etc/systemd/system/multi-user.target.wants/<name>.service`).
@@ -41,15 +43,15 @@ A personal, gaming/creative/AI-focused Fedora 44 atomic desktop:
 
 - `recipes/recipe.yml` — the BlueBuild recipe: `dnf` module (base/driver stack), `files` module (system files → `/`), `script` module (ordered list), `kargs`, `signing`.
 - `files/scripts/*.sh` — one script per inclusion. Current set (order matters):
-  install-latest-tools, enable-terra, swap-mesa-terra, enable-terra-multimedia, dnf-terra-apps, install-scx-schedulers, enable-rpmfusion, dnf-fedora-extras, install-zen-browser, install-llama-cpp, install-greetd, install-budgie-desktop, install-nautilus, install-themes, selinux-gaming, install-open-webui, install-glance, install-noise-suppression, install-cachyos-settings, install-shader-cache, install-ntsync, install-wl-clip-persist, install-just, install-handlr-regex, install-ab-download-manager, install-proton-cachyos, install-flameget, install-betterbird, install-midori, install-zen-adblocker, install-hermes, install-blackbird, install-unsloth-desktop.
+  install-kernel-cachyos, install-latest-tools, enable-terra, swap-mesa-terra, enable-terra-multimedia, dnf-terra-apps, install-scx-schedulers, enable-rpmfusion, dnf-fedora-extras, install-greenboot, install-zen-browser, install-llama-cpp, install-greetd, install-budgie-desktop, install-nautilus, install-themes, selinux-gaming, install-open-webui, install-glance, install-noise-suppression, install-cachyos-settings, install-shader-cache, install-ntsync, install-wl-clip-persist, install-just, install-handlr-regex, install-ab-download-manager, install-proton-cachyos, install-flameget, install-betterbird, install-midori, install-zen-adblocker, install-hermes, install-blackbird, install-unsloth-desktop.
 - `files/system/` — shipped files:
   - `usr/share/budgie-desktop/labwc/rc.xml` — production rc.xml (adaptive sync, tearing, reuseOutputMode, gamescope rule, W-r rofi, W-v cliphist) + `environment` (NVIDIA env).
   - `etc/dconf/`, `etc/sysctl.d/99-gamecompatibility.conf`, `etc/xdg/autostart/` (cliphist, wl-clip-persist), `etc/skel/justfile` + `etc/skel/.config/budgie-desktop/labwc/autostart`.
+  - `etc/pki/firstlight-mok/` — MOK public certs (cert.pem, db.der). **priv.pem is gitignored** and injected from the `FIRSTLIGHT_MOK_KEY` secret at build time.
 - `.github/workflows/`:
-  - `build.yml` — the BlueBuild image build (blue-build/github-action), **concurrency cancel-in-progress** (a scheduled run will cancel a manual dispatch on the same ref).
+  - `build.yml` — the BlueBuild image build (blue-build/github-action), **concurrency cancel-in-progress** (a scheduled run will cancel a manual dispatch on the same ref). Includes the MOK key injection step before the build.
   - `security.yml` — OpenSSF Scorecard + SBOM.
-  - `lint.yml` — actionlint + shellcheck.
-  - `codeql.yml` — CodeQL for workflow/JS/Python.
+  - (lint.yml/codeql.yml were removed during the clean-slate rewrite; only build.yml + security.yml exist.)
 - `cosign.pub` — image signing key.
 
 ## Build & verification workflow
@@ -69,7 +71,9 @@ A personal, gaming/creative/AI-focused Fedora 44 atomic desktop:
 - RPM Fusion: repos only (`enable-rpmfusion.sh`); `gstreamer1-plugins-bad-freeworld/ugly` deliberately excluded (x265-libs 4.1 vs Terra 4.2).
 - labwc outputs are configured via wlr-randr/kanshi (no `<outputs>` in rc.xml); max res/refresh = preferred mode via `autoEnableOutputs`.
 - NVIDIA env for the session lives in `~/.config/budgie-desktop/labwc/environment` (`GBM_BACKEND=nvidia-drm`, `__GLX_VENDOR_LIBRARY_NAME=nvidia`); system-wide in `/etc/environment` (shader caches).
-- `lollypop` is excluded: it hard-requires Fedora's `yt-dlp`, which conflicts with our Terra `yt-dlp-git`.
-- `pi` (Terra) is broken (bogus riscv64 Requires) → installed via bun. `scx-manager` and `nix` were removed (COPR conflicts / Determinate installer incompatible with bootc builds).
-- Kernel swap (bieszczaders/kernel-cachyos) is on hold: Secure Boot status unknown + sched_ext dwarves BTF issue (COPR #107 / BZ 2514913).
+- `lollypop` IS included (was excluded while it conflicted with Terra's yt-dlp-git; the conflict is gone with Fedora's stable yt-dlp).
+- `pi` (Terra) is broken (bogus riscv64 Requires) → installed via bun. `nix` was removed (Determinate installer incompatible with bootc builds). `scx-manager` comes from the CachyOS addons COPR (`--repofrompath`, never globally enabled).
+- **kernel-cachyos + Secure Boot**: kernel + devel from COPR `bieszczaders/kernel-cachyos` (installed in the dnf module, copr list). NVIDIA is `kmod-nvidia-open-dkms` (noarch DKMS, builds for stock AND cachyos kernels — `nvidia-open` is precompiled for the stock kernel only and must NOT be used). Signing happens in `install-kernel-cachyos.sh`: `sbsign` each `/usr/lib/modules/<kver>/vmlinuz` (skip if already signed by our cert), then `xz -d` every `.ko.xz` (signature must go on the uncompressed ELF) and `scripts/sign-file sha256 priv.pem db.der` every `.ko`. Requires `FIRSTLIGHT_MOK_KEY` secret (base64 PKCS8 PEM) + shipped cert.pem/db.der; build fails loudly if missing. Enroll once per machine: `sudo mokutil --import /etc/pki/firstlight-mok/db.der` (+ 2 reboots). Stock kernel stays as unsigned-fallback entry until then.
+- **greenboot**: packages `greenboot` + `greenboot-default-health-checks` (the Rust rewrite, v0.16.x, present in Fedora 44 release/updates repos — verify with the mirror listing, NOT packages.fedoraproject.org which is stale for this package). `install-greenboot.sh` enables `greenboot-healthcheck.service`; the default-health-checks subpackage ships the network-online drop-in.
+- **terra-gamescope** comes from the Terra extras subrepo (`terra-release-extras`, keeps its shipped priority=150; the explicit package name wins over Fedora's gamescope).
 - GHCR version `1137159731` is undeletable (>5000 downloads) — requires GitHub support.

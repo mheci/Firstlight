@@ -21,6 +21,7 @@ modules:
     repos:
       copr:
         - imput/helium
+        - bieszczaders/kernel-cachyos
       files:
         - https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
         - https://developer.download.nvidia.com/compute/cuda/repos/fedora44/x86_64/cuda-fedora44.repo
@@ -31,18 +32,23 @@ modules:
       packages:
         - brave-origin
         - helium-bin
-        # kernel headers/devel for building kernel modules; required by NVIDIA driver install
+        # CachyOS kernel (BORE/1000Hz, sched_ext, ntsync patched in) + matching devel.
+        # The stock Fedora kernel stays as the Secure Boot fallback until the MOK is enrolled.
+        - kernel-cachyos
+        - kernel-cachyos-devel-matched
+        # kernel headers/devel for the stock kernel; required by NVIDIA DKMS builds
         - kernel-devel-matched
         - kernel-headers
-        # NVIDIA driver (open kernel modules) + CUDA toolkit per NVIDIA Fedora docs
-        - nvidia-open
+        # NVIDIA driver (open kernel modules, DKMS build -> matches kernel-cachyos) + CUDA
+        - kmod-nvidia-open-dkms
+        - nvidia-driver
         - cuda-toolkit
         - gcc
         - gcc-c++
         # OpenCL loader + Khronos headers (NVIDIA's ICD ships with the driver)
         - ocl-icd
         - opencl-headers
-        # NVIDIA utilities (nvidia-smi ships inside nvidia-open)
+        # NVIDIA utilities (nvidia-smi ships inside nvidia-driver)
         - nvidia-settings
         - nvidia-persistenced
         - nvidia-modprobe
@@ -51,18 +57,20 @@ modules:
         - nvtop
         - btop
         # media and runtimes
-        - nodejs # includes npm; yt-dlp comes from Terra (yt-dlp-git)
+        - nodejs # includes npm; yt-dlp comes from Fedora (stable, replaces Terra's yt-dlp-git)
 
   - type: script
     scripts:
+      - install-kernel-cachyos.sh # Secure Boot: sign kernel-cachyos (PE) + all modules with the MOK key
       - install-latest-tools.sh # bun + pi via bun (Terra's pi RPM is broken; opencode comes from Terra)
-      - enable-terra.sh # Terra repo + mesa subrepo bootstrap, priority=1
+      - enable-terra.sh # Terra repo + mesa/extras subrepos bootstrap, priority=1
       - swap-mesa-terra.sh # mesa downgraded to Terra's build
       - enable-terra-multimedia.sh # fdk-aac (32-bit for steam), ffmpeg, gstreamer libav plugin
-      - dnf-terra-apps.sh # yt-dlp-git, ejs, deno + Terra apps (lact/uupd/vicinae/t3code/opencode/budgie-extras)
-      - install-scx-schedulers.sh # scx-tools-nightly + scx-scheds-nightly
+      - dnf-terra-apps.sh # ejs, deno + Terra apps (lact/uupd/vicinae/t3code/opencode/budgie-extras) + terra-gamescope
+      - install-scx-schedulers.sh # scx-scheds + scx-tools (stable, Terra) + scx-manager (CachyOS addons COPR)
       - enable-rpmfusion.sh # RPM Fusion repos only (fallback)
-      - dnf-fedora-extras.sh # kitty, fastfetch, zsh, gstreamer stack, fonts
+      - dnf-fedora-extras.sh # kitty, fastfetch, zsh, gstreamer stack, fonts, yt-dlp, mpv, lollypop
+      - install-greenboot.sh # boot health checks + auto rollback (greenboot-rs, Fedora)
       - install-zen-browser.sh # Zen browser tarball + desktop entry
       - install-llama-cpp.sh # llama.cpp with CUDA backend, prebuilt conda-forge binaries
       - install-greetd.sh # greetd + gtkgreet/cage GUI greeter, multi-head via cage -m extend
