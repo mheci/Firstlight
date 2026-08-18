@@ -1,0 +1,99 @@
+---
+# yaml-language-server: $schema=https://schema.blue-build.org/recipe-v1.json
+# image will be published to ghcr.io/<user>/<name>
+name: firstlight
+# description will be included in the image's metadata
+description: My personal Fedora image with NVIDIA open drivers and CUDA, built with BlueBuild.
+
+# the base image to build on top of (FROM) and the version tag to use
+base-image: ghcr.io/blue-build/base-images/fedora-base
+image-version: "44" # pinned to Fedora 44 to match the fedora44 NVIDIA repos and avoid future breakage
+
+# module configuration, executed in order
+# you can include multiple instances of the same module
+modules:
+  - type: files
+    files:
+      - source: system
+        destination: / # copies files/system/* (* means everything inside it) into your image's root folder /
+
+  - type: dnf
+    repos:
+      copr:
+        - imput/helium
+      files:
+        - https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
+        - https://developer.download.nvidia.com/compute/cuda/repos/fedora44/x86_64/cuda-fedora44.repo
+      keys:
+        - https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
+        - https://developer.download.nvidia.com/compute/cuda/repos/fedora44/x86_64/73CD9B30.pub
+    install:
+      packages:
+        - brave-origin
+        - helium-bin
+        # kernel headers/devel for building kernel modules; required by NVIDIA driver install
+        - kernel-devel-matched
+        - kernel-headers
+        # NVIDIA driver (open kernel modules) + CUDA toolkit per NVIDIA Fedora docs
+        - nvidia-open
+        - cuda-toolkit
+        - gcc
+        - gcc-c++
+        # OpenCL loader + Khronos headers (NVIDIA's ICD ships with the driver)
+        - ocl-icd
+        - opencl-headers
+        # NVIDIA utilities (nvidia-smi ships inside nvidia-open)
+        - nvidia-settings
+        - nvidia-persistenced
+        - nvidia-modprobe
+        - nvidia-xconfig
+        # monitoring
+        - nvtop
+        - btop
+        # media and runtimes
+        - nodejs # includes npm; yt-dlp comes from Terra (yt-dlp-git)
+
+  - type: script
+    scripts:
+      - install-latest-tools.sh # bun + pi via bun (Terra's pi RPM is broken; opencode comes from Terra)
+      - enable-terra.sh # Terra repo + mesa subrepo bootstrap, priority=1
+      - swap-mesa-terra.sh # mesa downgraded to Terra's build
+      - enable-terra-multimedia.sh # fdk-aac (32-bit for steam), ffmpeg, gstreamer libav plugin
+      - dnf-terra-apps.sh # yt-dlp-git, ejs, deno + Terra apps (lact/uupd/vicinae/t3code/opencode/budgie-extras)
+      - install-scx-schedulers.sh # scx-tools-nightly + scx-scheds-nightly
+      - enable-rpmfusion.sh # RPM Fusion repos only (fallback)
+      - dnf-fedora-extras.sh # kitty, fastfetch, zsh, gstreamer stack, fonts
+      - install-zen-browser.sh # Zen browser tarball + desktop entry
+      - install-llama-cpp.sh # llama.cpp with CUDA backend, prebuilt conda-forge binaries
+      - install-greetd.sh # greetd + gtkgreet/cage GUI greeter, multi-head via cage -m extend
+      - install-budgie-desktop.sh # Budgie Desktop 10.10 (Wayland/labwc) + labwc tools + wl-clipboard/cliphist + rofi
+      - install-nautilus.sh # nautilus + gnome-disk-utility + minimal gvfs (mtp, gphoto2)
+      - install-themes.sh # full Adwaita, adw-gtk3, Tela + Papirus icons, dconf dark defaults
+      - selinux-gaming.sh # SELinux booleans for Proton/Wine (execmod/execstack/execheap) via boot unit
+      - install-open-webui.sh # Open WebUI (quadlet container) as llama.cpp frontend
+      - install-glance.sh # Glance dashboard (systemd service)
+      - install-noise-suppression.sh # RNNoise mic denoising (werman LADSPA, stereo) via pipewire filter-chain
+      - install-cachyos-settings.sh # CachyOS tuned sysctls/udev/systemd (zram disabled - zswap preferred)
+      - install-shader-cache.sh # system-wide shader cache caps (NVIDIA/Mesa/DXVK/vkd3d) via /etc/environment
+      - install-ntsync.sh # autoload ntsync module - /dev/ntsync is world-rw (0666) once loaded
+      - install-wl-clip-persist.sh # clipboard survives app exit (cargo build v0.5.0) + autostart
+      - install-just.sh # just command runner (Fedora rust-just)
+      - install-handlr-regex.sh # handlr-regex default-app handler (release binary)
+      - install-ab-download-manager.sh # AB Download Manager (third-party COPR, 1.10.1)
+      - install-proton-cachyos.sh # Proton-CachyOS Steam compat tool (baked tarball + per-user installer)
+      - install-flameget.sh # FlameGet download manager (native from source, no Flatpak)
+      - install-betterbird.sh # Betterbird mail client (native tarball to /opt, no Flatpak)
+      - install-midori.sh # Midori browser (project's Fedora RPM, no Flatpak)
+      - install-zen-adblocker.sh # Irbis Zen system-wide adblocker (tarball to /opt)
+      - install-hermes.sh # Hermes Agent (Nous Research) AI agent CLI
+      - install-blackbird.sh # blackbird OSINT CLI (venv in /opt/blackbird)
+      - install-unsloth-desktop.sh # Unsloth Desktop (extracted from .deb, no rpm exists)
+
+  - type: kargs
+    kargs:
+      - rd.driver.blacklist=nouveau
+      - modprobe.blacklist=nouveau
+      - nvidia-drm.modeset=1
+      - nvidia-drm.fbdev=1
+
+  - type: signing # this sets up the proper policy & signing files for signed images to work fully

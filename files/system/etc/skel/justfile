@@ -1,0 +1,189 @@
+# justfile - Firstlight image command hub
+# run `just` to list recipes, `just --choose` for an interactive picker (fzf/rofi)
+set shell := ["bash", "-uc"]
+
+# ─── Entry ──────────────────────────────────────────────────────────────────────
+default:
+    @just --list
+
+menu:
+    @just --choose
+
+# ─── System ─────────────────────────────────────────────────────────────────────
+# update the whole image (atomic)
+update:
+    rpm-ostree upgrade
+
+# show deploy/rollback state
+status:
+    rpm-ostree status
+
+# reboot into the new deployment
+reboot:
+    systemctl reboot
+
+# list failed system services
+failed:
+    systemctl --failed
+
+# tail the full boot log of the previous boot (post-update diagnostics)
+prevboot:
+    journalctl -b -1 -e
+
+# ─── Services ───────────────────────────────────────────────────────────────────
+services:
+    systemctl --no-pager status greetd open-webui glance nix-daemon scx_loader ananicy-cpp
+
+# restart the login greeter
+restart-greeter:
+    systemctl restart greetd
+
+# ─── Configurations ─────────────────────────────────────────────────────────────
+# refresh dconf/GTK theme defaults
+dconf-reload:
+    dconf update
+
+# show active theme config
+theme:
+    gsettings get org.gnome.desktop.interface gtk-theme
+    gsettings get org.gnome.desktop.interface icon-theme
+    gsettings get org.gnome.desktop.interface color-scheme
+
+# current SELinux booleans relevant to gaming
+selinux-gaming:
+    getsebool selinuxuser_execmod selinuxuser_execstack selinuxuser_execheap
+
+# show sysctls we ship
+sysctls:
+    sysctl vm.max_map_count vm.swappiness fs.inotify.max_user_watches fs.inotify.max_user_instances
+
+# ─── Networking ─────────────────────────────────────────────────────────────────
+net-status:
+    nmcli device status
+    nmcli connection show --active
+
+net-wifi:
+    nmcli device wifi list
+
+net-refresh-dns:
+    systemctl restart systemd-resolved
+
+firewall:
+    sudo firewall-cmd --list-all
+
+# test raw throughput to the gateway
+latency:
+    ping -c 5 $(ip route | awk '/default/ {print $3; exit}')
+
+# ─── Privacy ────────────────────────────────────────────────────────────────────
+# clear per-user caches (nvidia/mesa shader caches, dxvk, cliphist, thumbnails)
+clear-caches:
+    rm -rf ~/.cache/nvidia ~/.cache/mesa_shader_cache ~/.cache/dxvk ~/.cache/vkd3d-proton ~/.cache/cliphist ~/.cache/thumbnails
+    wl-copy --clear
+
+# wipe clipboard history entirely
+cliphist-wipe:
+    cliphist wipe
+
+# one-shot journal scrub (current boot only, keeps persistent logs)
+journal-scrub:
+    journalctl --rotate
+    journalctl --vacuum-time=7d
+
+# ─── Gaming ─────────────────────────────────────────────────────────────────────
+# GPU status
+gpu:
+    nvidia-smi
+
+gpu-vulkan:
+    vulkaninfo --summary
+
+# shader cache sizes
+shader-sizes:
+    du -sh ~/.cache/nvidia ~/.cache/mesa_shader_cache ~/.cache/dxvk 2>/dev/null || true
+
+# sched_ext scheduler control
+scx-list:
+    scxctl status
+
+# switch to the bpfland scheduler (responsive desktop)
+scx-bpfland:
+    sudo scx_loader switch scx_bpfland
+
+# switch to the rusty scheduler (throughput)
+scx-rusty:
+    sudo scx_loader switch scx_rusty
+
+# open scx-manager GUI
+scx-manager:
+    scx-manager
+
+# ananicy process-priority daemon status
+ananicy:
+    systemctl status ananicy-cpp
+
+# clear dxvk/vkd3d state caches for a game (id=steam appid dir under compatdata)
+gpu-cache-clear id:
+    rm -rf ~/.local/share/Steam/steamapps/shadercache/{{id}}
+    rm -rf ~/.local/share/Steam/steamapps/compatdata/{{id}}/dxvk-cache
+
+# ─── Creative ───────────────────────────────────────────────────────────────────
+# screenshot the whole screen
+screenshot:
+    grim ~/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png
+
+# screenshot an interactive region
+screenshot-region:
+    grim -g "$(slurp)" ~/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png
+
+# record the screen (ffmpeg, wayland-capture via pipewire)
+record out=recording.mp4:
+    wf-recorder -o {{out}}
+
+# stop screen recording
+record-stop:
+    pkill -INT wf-recorder
+
+# ─── AI ─────────────────────────────────────────────────────────────────────────
+# start llama-server (CUDA) on port 10000 with a model from /var/lib/llama/models
+llama-start model:
+    llama-server --model /var/lib/llama/models/{{model}} --port 10000 --n-gpu-layers 999
+
+llama-stop:
+    pkill -f llama-server || true
+
+llama-status:
+    pgrep -af llama-server || echo "llama-server not running"
+
+# list downloaded GGUF models
+llama-models:
+    ls -1 /var/lib/llama/models
+
+# download a GGUF model from HuggingFace into the models dir (llama-server -hf)
+llama-pull repo_model:
+    LLAMA_CACHE=/var/lib/llama/models llama-server -hf {{repo_model}} --port 10000 --n-gpu-layers 999
+
+# Open WebUI status/restart
+webui:
+    systemctl status open-webui
+webui-restart:
+    systemctl restart open-webui
+
+# ─── Nix ────────────────────────────────────────────────────────────────────────
+nix-info:
+    nix --version
+    echo $NIX_PATH
+nix-gc:
+    nix store gc
+
+# ─── Misc ───────────────────────────────────────────────────────────────────────
+zen:
+    zen &
+
+glance:
+    systemctl status glance
+
+deno:
+    deno --version
+bun:
+    bun --version

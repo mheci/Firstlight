@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Clipboard History Store
+Comment=Watch the Wayland clipboard and store entries in cliphist
+Exec=wl-paste --watch cliphist store
+OnlyShowIn=Budgie;
+X-GNOME-Autostart=true
+NoDisplay=true
