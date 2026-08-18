@@ -21,7 +21,6 @@ modules:
     repos:
       copr:
         - imput/helium
-        - bieszczaders/kernel-cachyos
       files:
         - https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
         - https://developer.download.nvidia.com/compute/cuda/repos/fedora44/x86_64/cuda-fedora44.repo
@@ -32,15 +31,13 @@ modules:
       packages:
         - brave-origin
         - helium-bin
-        # CachyOS kernel (BORE/1000Hz, sched_ext, ntsync patched in) + matching devel.
-        # The stock Fedora kernel stays as the Secure Boot fallback until the MOK is enrolled.
-        - kernel-cachyos
-        - kernel-cachyos-devel-matched
         # kernel headers/devel for the stock kernel; required by NVIDIA DKMS builds
+        # (the CachyOS kernel + devel install in install-kernel-cachyos.sh - its scriptlet
+        # order breaks the dnf module, and the DKMS kmod must build after it)
         - kernel-devel-matched
         - kernel-headers
-        # NVIDIA driver (open kernel modules, DKMS build -> matches kernel-cachyos) + CUDA
-        - kmod-nvidia-open-dkms
+        # NVIDIA driver userspace + CUDA (the open kernel modules kmod-nvidia-open-dkms
+        # install in install-kernel-cachyos.sh so DKMS builds for the CachyOS kernel too)
         - nvidia-driver
         - cuda-toolkit
         - gcc
@@ -61,7 +58,7 @@ modules:
 
   - type: script
     scripts:
-      - install-kernel-cachyos.sh # Secure Boot: sign kernel-cachyos (PE) + all modules with the MOK key
+      - install-kernel-cachyos.sh # CachyOS kernel (noscripts + depmod), NVIDIA DKMS kmod, Secure Boot signing (MOK)
       - install-latest-tools.sh # bun + pi via bun (Terra's pi RPM is broken; opencode comes from Terra)
       - enable-terra.sh # Terra repo + mesa/extras subrepos bootstrap, priority=1
       - swap-mesa-terra.sh # mesa downgraded to Terra's build
