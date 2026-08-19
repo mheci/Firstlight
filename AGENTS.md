@@ -65,7 +65,7 @@ A personal, gaming/creative/AI-focused Fedora 44 atomic desktop:
 5. On failure: `gh run view <id> --repo mheci/Firstlight --log-failed` and fix the root cause.
 6. (ISO builds were removed; the forked `mheci/build-container-installer` repo and its image were deleted.)
 
-**Build status: GREEN as of 2026-08-19** (run 32220365967, commit f0d4944, image `ghcr.io/mheci/firstlight:latest`). The three blocker fixes that got it there: (1) depmod per installed kernel version instead of `depmod -a` — the latter resolves `uname -r`, which inside the build container is the GitHub-hosted runner kernel (e.g. `6.17.0-1022-azure`) that has no /lib/modules dir; (2) manual `actions/checkout` + `skip_checkout: "true"` on the blue-build action so the injected gitignored MOK `priv.pem` survives (the action's internal checkout would wipe it); (3) `--allowerasing` for `terra-gamescope` (Conflicts with Fedora's `gamescope`, pulled in as a dep).
+**Build status: GREEN as of 2026-08-19** (run 32237012619, commit df6ec6f, image `ghcr.io/mheci/firstlight:latest`). Validated end-to-end in this cycle: whisper.cpp CUDA build (nvcc PATH + `-allow-unsupported-compiler` for gcc 16), falcond + falcond-gui (Terra, `--allowerasing` vs gamemode), scx-scheds-nightly→stable swap (`--allowerasing`), the full Bazzite/CachyOS/PikaOS gaming batch, hermes-agent installer, blackbird venv, unsloth-desktop .deb extraction, and upscayl removal (opaque non-squashfs AppImage). The foundational fixes that first got the pipeline green remain in the facts below (per-kernel `depmod`, manual checkout + `skip_checkout` for the MOK key, `--allowerasing` for terra-gamescope).
 
 ## Key technical facts (verified; avoid re-researching)
 
