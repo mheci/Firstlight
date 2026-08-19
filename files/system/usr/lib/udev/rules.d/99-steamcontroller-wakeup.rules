@@ -1,0 +1,2 @@
+# Steam/Valve controllers (idVendor 28de) can wake the machine from sleep (Bazzite)
+ACTION=="add", SUBSYSTEM=="usb", ATTRS{idVendor}=="28de", ATTR{power/wakeup}="enabled"

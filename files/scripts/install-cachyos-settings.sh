@@ -5,7 +5,8 @@ set -euo pipefail
 # Installed from the bieszczaders/kernel-cachyos-addons COPR via --repofrompath (no global
 # repo enable, so it cannot shadow Terra packages on future upgrades). It Conflicts with and
 # Provides zram-generator-defaults, so Fedora's zram-generator-defaults is auto-removed.
-dnf install -y --allowerasing --nogpgcheck --repofrompath=addons,https://download.copr.fedorainfracloud.org/results/bieszczaders/kernel-cachyos-addons/fedora-44-x86_64/ cachyos-settings
+# power-profiles-daemon is needed by the game-performance wrapper (install-game-performance.sh).
+dnf install -y --allowerasing --nogpgcheck --repofrompath=addons,https://download.copr.fedorainfracloud.org/results/bieszczaders/kernel-cachyos-addons/fedora-44-x86_64/ cachyos-settings power-profiles-daemon
 
 # User prefers zswap over zram: disable zram so cachyos-settings' 30-zram.rules (which would
 # disable zswap and raise swappiness to 150 the moment a zram0 device appears) never fires.

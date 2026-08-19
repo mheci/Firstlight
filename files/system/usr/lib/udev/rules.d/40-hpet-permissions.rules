@@ -1,0 +1,3 @@
+# hpet/rtc0 owned by @audio so pro-audio/gaming apps can access them (CachyOS)
+KERNEL=="rtc0", GROUP="audio"
+KERNEL=="hpet", GROUP="audio"

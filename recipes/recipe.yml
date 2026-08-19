@@ -79,7 +79,8 @@ modules:
       - install-open-webui.sh # Open WebUI (quadlet container) as llama.cpp frontend
       - install-glance.sh # Glance dashboard (systemd service)
       - install-noise-suppression.sh # RNNoise mic denoising (werman LADSPA, stereo) via pipewire filter-chain
-      - install-cachyos-settings.sh # CachyOS tuned sysctls/udev/systemd (zram disabled - zswap preferred)
+      - install-cachyos-settings.sh # CachyOS tuned sysctls/udev/systemd (zram disabled - zswap preferred) + power-profiles-daemon
+      - install-game-performance.sh # game-performance wrapper (perf profile + scx Gaming mode) + pci-latency service
       - install-shader-cache.sh # system-wide shader cache caps (NVIDIA/Mesa/DXVK/vkd3d) via /etc/environment
       - install-ntsync.sh # autoload ntsync module - /dev/ntsync is world-rw (0666) once loaded
       - install-wl-clip-persist.sh # clipboard survives app exit (cargo build v0.5.0) + autostart

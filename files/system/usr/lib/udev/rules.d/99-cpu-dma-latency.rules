@@ -1,0 +1,3 @@
+# grant @audio access to cpu_dma_latency (used by gamemode/pro-audio to disable
+# C-state latency penalties) (CachyOS)
+DEVPATH=="/devices/virtual/misc/cpu_dma_latency", OWNER="root", GROUP="audio", MODE="0660"
