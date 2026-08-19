@@ -63,6 +63,8 @@ A personal, gaming/creative/AI-focused Fedora 44 atomic desktop:
 5. On failure: `gh run view <id> --repo mheci/Firstlight --log-failed` and fix the root cause.
 6. (ISO builds were removed; the forked `mheci/build-container-installer` repo and its image were deleted.)
 
+**Build status: GREEN as of 2026-08-19** (run 32220365967, commit f0d4944, image `ghcr.io/mheci/firstlight:latest`). The three blocker fixes that got it there: (1) depmod per installed kernel version instead of `depmod -a` — the latter resolves `uname -r`, which inside the build container is the GitHub-hosted runner kernel (e.g. `6.17.0-1022-azure`) that has no /lib/modules dir; (2) manual `actions/checkout` + `skip_checkout: "true"` on the blue-build action so the injected gitignored MOK `priv.pem` survives (the action's internal checkout would wipe it); (3) `--allowerasing` for `terra-gamescope` (Conflicts with Fedora's `gamescope`, pulled in as a dep).
+
 ## Key technical facts (verified; avoid re-researching)
 
 - Terra bootstrap: `dnf install -y --nogpgcheck --repofrompath 'terra,https://repos.fyralabs.com/terra$releasever' terra-release terra-gpg-keys`, then priority via `sed -i 's/^\[terra\(.*\)\]/[terra\1]\npriority=1/' /etc/yum.repos.d/terra.repo /etc/yum.repos.d/terra-mesa.repo`.
