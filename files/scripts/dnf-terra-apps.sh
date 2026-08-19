@@ -15,5 +15,7 @@ dnf install -y deno
 dnf install -y faugus-launcher steam zed protonplus umu-launcher mission-center sniffnet ghostty t3code zsh-autocomplete iosevka-nerd-fonts cachyos-ananicy-rules ananicy-cpp superfile ScopeBuddy icoextract-thumbnailer lact uupd vicinae opencode budgie-extras noctalia
 
 # terra-gamescope from Terra extras - explicit name so extras' priority=150 still wins over
-# Fedora's gamescope (extras release package installs the repo; name match beats priority)
-dnf install -y terra-gamescope
+# Fedora's gamescope (extras release package installs the repo; name match beats priority).
+# --allowerasing: terra-gamescope carries a Conflicts on Fedora's gamescope, which gets
+# pulled in as a dep (e.g. by mangohud/steam); Terra's build is the intended one.
+dnf install -y --allowerasing terra-gamescope
