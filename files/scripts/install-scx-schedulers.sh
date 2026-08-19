@@ -4,7 +4,10 @@ set -euo pipefail
 # scx - stable sched_ext schedulers + tools from Terra main (the nightly packages are
 # gone per the stable-only decision). CO-RE BPF userspace schedulers load fine on the
 # kernel-cachyos kernel (no per-kernel .ko modules since scx v1.0).
-dnf install -y scx-scheds scx-tools
+# --allowerasing: falcond's Requires "(scx-scheds or scx-scheds-nightly)" can be
+# satisfied by Terra's higher-EVR scx-scheds-nightly (daily build), which Conflicts
+# with the stable package - explicitly unwanted, swap back to stable.
+dnf install -y --allowerasing scx-scheds scx-tools
 
 # scx-manager (GTK GUI on top of scx_loader) ships in the kernel-cachyos addons COPR;
 # enable the repo via repofrompath only (cannot shadow Terra on upgrades)
