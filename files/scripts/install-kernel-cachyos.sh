@@ -35,6 +35,9 @@ for kdir in /usr/lib/modules/*/; do
 done
 dnf install -y kmod-nvidia-open-dkms nvidia-driver
 
+# keep the persistence daemon alive so the GPU stays out of D3 during idle
+systemctl enable nvidia-persistenced
+
 # Secure Boot: the CachyOS kernel is NOT signed by Fedora - with Secure Boot on,
 # shim/GRUB refuse it and kernel lockdown (integrity) refuses unsigned modules.
 # Sign the kernel (PE) with sbsign and every module (ELF) with kernel's sign-file, using a

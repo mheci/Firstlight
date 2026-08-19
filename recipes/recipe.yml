@@ -64,12 +64,13 @@ modules:
       - swap-mesa-terra.sh # mesa downgraded to Terra's build
       - enable-terra-multimedia.sh # fdk-aac (32-bit for steam), ffmpeg, gstreamer libav plugin
       - dnf-terra-apps.sh # ejs, deno + Terra apps (lact/uupd/vicinae/t3code/opencode/budgie-extras) + terra-gamescope
-      - install-scx-schedulers.sh # scx-scheds + scx-tools (stable, Terra) + scx-manager (CachyOS addons COPR)
+      - install-scx-schedulers.sh # scx-scheds + scx-tools (stable, Terra) + scx-manager (CachyOS addons COPR) + all-16-scheduler perf config
       - enable-rpmfusion.sh # RPM Fusion repos only (fallback)
-      - dnf-fedora-extras.sh # kitty, fastfetch, zsh, gstreamer stack, fonts, yt-dlp, mpv, lollypop
+      - dnf-fedora-extras.sh # kitty, fastfetch, zsh, gstreamer stack, fonts, yt-dlp, mpv, lollypop, input-remapper, ddcutil, i2c-tools, obs-studio (+distroav), sync/creative tools
       - install-greenboot.sh # boot health checks + auto rollback (greenboot-rs, Fedora)
-      - install-zen-browser.sh # Zen browser tarball + desktop entry
+      - install-waterfox.sh # Waterfox browser (official BrowserWorks OBS repo, rpm)
       - install-llama-cpp.sh # llama.cpp with CUDA backend, prebuilt conda-forge binaries
+      - install-whisper-cpp.sh # whisper.cpp with CUDA backend (source build v1.9.2, no package exists)
       - install-greetd.sh # greetd + gtkgreet/cage GUI greeter, multi-head via cage -m extend
       - install-budgie-desktop.sh # Budgie Desktop 10.10 (Wayland/labwc) + labwc tools + wl-clipboard/cliphist + rofi
       - install-nautilus.sh # nautilus + gnome-disk-utility + minimal gvfs (mtp, gphoto2)
@@ -90,6 +91,7 @@ modules:
       - install-betterbird.sh # Betterbird mail client (native tarball to /opt, no Flatpak)
       - install-midori.sh # Midori browser (project's Fedora RPM, no Flatpak)
       - install-zen-adblocker.sh # Irbis Zen system-wide adblocker (tarball to /opt)
+      - install-upscayl.sh # UpScaly AI image upscaler (AppImage extraction v2.15.0, sha512-verified)
       - install-hermes.sh # Hermes Agent (Nous Research) AI agent CLI
       - install-blackbird.sh # blackbird OSINT CLI (venv in /opt/blackbird)
       - install-unsloth-desktop.sh # Unsloth Desktop (extracted from .deb, no rpm exists)

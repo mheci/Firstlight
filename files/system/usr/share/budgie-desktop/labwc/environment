@@ -11,6 +11,8 @@ XCURSOR_SIZE=24
 # NVIDIA - Wayland native (nvidia-drm GBM + GLVND for XWayland GL)
 GBM_BACKEND=nvidia-drm
 __GLX_VENDOR_LIBRARY_NAME=nvidia
+# labwc 0.9.6 (wlroots 0.19) Vulkan renderer - preferred on NVIDIA
+WLR_RENDERER=vulkan
 
 # Uncomment only if a specific issue appears:
 # Disappearing/flickering cursor:

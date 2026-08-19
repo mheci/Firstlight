@@ -32,7 +32,7 @@ prevboot:
 
 # ─── Services ───────────────────────────────────────────────────────────────────
 services:
-    systemctl --no-pager status greetd open-webui glance nix-daemon scx_loader ananicy-cpp
+    systemctl --no-pager status greetd open-webui glance scx_loader ananicy-cpp
 
 # restart the login greeter
 restart-greeter:
@@ -169,16 +169,9 @@ webui:
 webui-restart:
     systemctl restart open-webui
 
-# ─── Nix ────────────────────────────────────────────────────────────────────────
-nix-info:
-    nix --version
-    echo $NIX_PATH
-nix-gc:
-    nix store gc
-
 # ─── Misc ───────────────────────────────────────────────────────────────────────
-zen:
-    zen &
+waterfox:
+    waterfox &
 
 glance:
     systemctl status glance
