@@ -26,9 +26,11 @@ dnf install -y dkms-xpadneo steamtinkerlaunch vulkan-low-latency-layer localsend
 # games, enables performance mode while gaming, optional per-game SCX scheduler
 # switching (default scx_sched=none -> doesn't touch scx_loader) + DMEM cgroup
 # protection (CachyOS kernel has CONFIG_CGROUP_DMEM). Pulls falcond-profiles +
-# scx-scheds automatically; Conflicts gamemode (not shipped). Service is disabled
-# by default upstream (user enablement via falcond-gui) -> we enable it.
-dnf install -y falcond falcond-gui
+# scx-scheds automatically; Conflicts gamemode (Fedora's, pulled in as a dep) ->
+# --allowerasing removes it: falcond replaces its functionality (falcond-profiles
+# deps are "(falcond or gamemode)"). Service is disabled by default upstream
+# (user enablement via falcond-gui) -> we enable it.
+dnf install -y --allowerasing falcond falcond-gui
 systemctl enable falcond.service
 
 # terra-gamescope from Terra extras - explicit name so extras' priority=150 still wins over
