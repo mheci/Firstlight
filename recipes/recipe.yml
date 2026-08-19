@@ -92,7 +92,6 @@ modules:
       - install-betterbird.sh # Betterbird mail client (native tarball to /opt, no Flatpak)
       - install-midori.sh # Midori browser (project's Fedora RPM, no Flatpak)
       - install-zen-adblocker.sh # Irbis Zen system-wide adblocker (tarball to /opt)
-      - install-upscayl.sh # UpScaly AI image upscaler (AppImage extraction v2.15.0, sha512-verified)
       - install-hermes.sh # Hermes Agent (Nous Research) AI agent CLI
       - install-blackbird.sh # blackbird OSINT CLI (venv in /opt/blackbird)
       - install-unsloth-desktop.sh # Unsloth Desktop (extracted from .deb, no rpm exists)
