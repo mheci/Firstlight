@@ -15,8 +15,13 @@ dnf config-manager addrepo --from-repofile=https://copr.fedorainfracloud.org/cop
 # BLS entries on the machine at deploy time.
 dnf install -y --setopt=tsflags=noscripts kernel-cachyos kernel-cachyos-devel-matched
 
-# modules.dep for both kernels (dkms + first-boot dracut need it)
-depmod -a
+# modules.dep for both kernels (dkms + first-boot dracut need it). Run per version:
+# plain `depmod -a` resolves uname -r, which inside the build container is the host
+# runner kernel (e.g. 6.17.0-1022-azure) that has no /lib/modules dir here.
+for kver in /usr/lib/modules/*/; do
+  kver=$(basename "$kver")
+  depmod "$kver"
+done
 
 # NVIDIA open kernel modules via DKMS (noarch, builds for every installed kernel incl.
 # cachyos; nvidia-open would be stock-kernel-only). Install after the cachyos kernel so
