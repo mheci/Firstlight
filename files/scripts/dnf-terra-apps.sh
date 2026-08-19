@@ -22,6 +22,15 @@ dnf install -y faugus-launcher steam zed protonplus umu-launcher mission-center 
 # pulls in the xpadneo meta package itself).
 dnf install -y dkms-xpadneo steamtinkerlaunch vulkan-low-latency-layer localsend-bin
 
+# falcond (PikaOS's per-game optimization daemon, packaged by Terra): auto-detects
+# games, enables performance mode while gaming, optional per-game SCX scheduler
+# switching (default scx_sched=none -> doesn't touch scx_loader) + DMEM cgroup
+# protection (CachyOS kernel has CONFIG_CGROUP_DMEM). Pulls falcond-profiles +
+# scx-scheds automatically; Conflicts gamemode (not shipped). Service is disabled
+# by default upstream (user enablement via falcond-gui) -> we enable it.
+dnf install -y falcond falcond-gui
+systemctl enable falcond.service
+
 # terra-gamescope from Terra extras - explicit name so extras' priority=150 still wins over
 # Fedora's gamescope (extras release package installs the repo; name match beats priority).
 # --allowerasing: terra-gamescope carries a Conflicts on Fedora's gamescope, which gets

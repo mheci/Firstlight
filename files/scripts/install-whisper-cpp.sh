@@ -22,6 +22,7 @@ tar -xzf "$TMP/whisper.tar.gz" -C "$TMP"
 cmake -S "$TMP/whisper.cpp-1.9.2" -B "$TMP/build" -G Ninja \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc \
+  -DCMAKE_CUDA_FLAGS=-allow-unsupported-compiler \
   -DGGML_CUDA=ON
 cmake --build "$TMP/build" --target whisper-cli whisper-server -j"$(nproc)"
 
