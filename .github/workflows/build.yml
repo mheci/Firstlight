@@ -31,6 +31,12 @@ jobs:
           # !! Add your recipes here
           - recipe.yml
     steps:
+      # Checkout manually and skip the action's internal checkout (skip_checkout):
+      # the action's checkout resets the workspace from git, which would wipe the
+      # gitignored MOK private key injected below.
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
       # MOK signing key for the CachyOS kernel (Secure Boot). base64 PEM in the
       # FIRSTLIGHT_MOK_KEY secret; the files module ships it into the image, and
       # install-kernel-cachyos.sh signs the kernel + modules at build time.
@@ -48,6 +54,7 @@ jobs:
           cosign_private_key: ${{ secrets.SIGNING_SECRET }}
           registry_token: ${{ github.token }}
           pr_event_number: ${{ github.event.number }}
+          skip_checkout: "true" # we checkout above so the injected MOK key survives
 
           # enabled by default, disable if your image is small and you want faster builds
           maximize_build_space: true

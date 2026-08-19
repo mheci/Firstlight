@@ -49,7 +49,7 @@ A personal, gaming/creative/AI-focused Fedora 44 atomic desktop:
   - `etc/dconf/`, `etc/sysctl.d/99-gamecompatibility.conf`, `etc/xdg/autostart/` (cliphist, wl-clip-persist), `etc/skel/justfile` + `etc/skel/.config/budgie-desktop/labwc/autostart`.
   - `etc/pki/firstlight-mok/` — MOK public certs (cert.pem, db.der). **priv.pem is gitignored** and injected from the `FIRSTLIGHT_MOK_KEY` secret at build time.
 - `.github/workflows/`:
-  - `build.yml` — the BlueBuild image build (blue-build/github-action), **concurrency cancel-in-progress** (a scheduled run will cancel a manual dispatch on the same ref). Includes the MOK key injection step before the build.
+  - `build.yml` — the BlueBuild image build (blue-build/github-action), **concurrency cancel-in-progress** (a scheduled run will cancel a manual dispatch on the same ref). **Checkouts manually** (`actions/checkout`) and uses `skip_checkout: "true"` on the blue-build action — the action's own checkout would reset the workspace from git and **wipe the gitignored MOK private key** injected by the "Inject MOK signing key" step (base64 from the `FIRSTLIGHT_MOK_KEY` secret) before the build.
   - `security.yml` — OpenSSF Scorecard + SBOM.
   - (lint.yml/codeql.yml were removed during the clean-slate rewrite; only build.yml + security.yml exist.)
 - `cosign.pub` — image signing key.
