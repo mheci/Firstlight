@@ -9,6 +9,9 @@ set -euo pipefail
 # (whisper-cublas-*.zip) are Windows-only, verified - the only Linux CUDA path is
 # the ggml-org container image, which needs nvidia-container-toolkit at runtime.
 # The CPU build is the prebuilt choice per the no-source-builds policy.
+# NOTE: no /usr/local/* - the base image's /usr/local is a symlink that does not
+# resolve in the build container (same pitfall as the SB signer); /usr/bin and
+# /usr/lib are real dirs on the default loader path.
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 
@@ -16,8 +19,8 @@ curl -fL -o "$TMP/whisper.tar.gz" "https://github.com/ggml-org/whisper.cpp/relea
 tar -xzf "$TMP/whisper.tar.gz" -C "$TMP"
 WHISPER_DIR=$(find "$TMP" -maxdepth 2 -name whisper-cli -printf '%h\n' -quit)
 
-install -Dm755 "$WHISPER_DIR/whisper-cli" "$WHISPER_DIR/whisper-server" "$WHISPER_DIR/whisper-quantize" "$WHISPER_DIR/whisper-bench" /usr/local/bin/
-install -Dm755 "$WHISPER_DIR/whisper-vad-speech-segments" "$WHISPER_DIR/parakeet-cli" /usr/local/bin/ 2>/dev/null || true
+install -Dm755 "$WHISPER_DIR/whisper-cli" "$WHISPER_DIR/whisper-server" "$WHISPER_DIR/whisper-quantize" "$WHISPER_DIR/whisper-bench" /usr/bin/
+install -Dm755 "$WHISPER_DIR/whisper-vad-speech-segments" "$WHISPER_DIR/parakeet-cli" /usr/bin/ 2>/dev/null || true
 # shared libs must land where the loader finds them (binaries are not rpath'd)
-install -Dm644 "$WHISPER_DIR"/libwhisper.so* "$WHISPER_DIR"/libparakeet.so* "$WHISPER_DIR"/libggml*.so* /usr/local/lib/
+install -Dm644 "$WHISPER_DIR"/libwhisper.so* "$WHISPER_DIR"/libparakeet.so* "$WHISPER_DIR"/libggml*.so* /usr/lib/
 ldconfig
