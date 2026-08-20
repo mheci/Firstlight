@@ -1,0 +1,5 @@
+# vendored KWin scripts must stay byte-identical (binary .mo catalogs, JS/QML)
+files/system/usr/share/kwin/** -text
+# shell scripts: keep LF + exec-bit-safe behavior
+files/scripts/*.sh text eol=lf
+*.sh text eol=lf

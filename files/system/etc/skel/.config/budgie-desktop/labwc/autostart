@@ -1,8 +1,0 @@
-#!/bin/sh
-# labwc autostart (Budgie session) - run after config/env load, WAYLAND_DISPLAY set.
-# Max resolution + max refresh are picked automatically by labwc (preferred mode via
-# autoEnableOutputs); force preferred mode explicitly here for belt-and-suspenders.
-
-for output in $(wlr-randr 2>/dev/null | sed -n 's/^\([^ ]*\):.*/\1/p'); do
-  wlr-randr --output "$output" --preferred 2>/dev/null || true
-done

@@ -1,17 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# wl-clip-persist v0.5.0 - keeps the Wayland clipboard alive after the copying app exits.
-# Not packaged in Fedora, no prebuilt binaries, not on crates.io -> build from source
-# (pure-Rust wayrs-client, no wayland dev headers; Fedora rust 1.97.1 >= MSRV 1.85).
-dnf install -y cargo rust
-curl -fL -o /tmp/wl-clip-persist.tar.gz "https://github.com/Linus789/wl-clip-persist/archive/refs/tags/v0.5.0.tar.gz"
-tar -xzf /tmp/wl-clip-persist.tar.gz -C /tmp
-cd /tmp/wl-clip-persist-0.5.0
-cargo build --release
-install -m 0755 target/release/wl-clip-persist /usr/local/bin/wl-clip-persist
-cd /
-rm -rf /tmp/wl-clip-persist-0.5.0 /tmp/wl-clip-persist.tar.gz
+# wl-clip-persist - keeps the Wayland clipboard alive after the copying app exits.
+# No Fedora/Terra/RPM-Fusion package, no GitHub prebuilt binaries (source-only
+# releases, verified 2026-08-20) -> install the prebuilt RPM from the dedicated
+# leloubil COPR (v0.4.1, fedora-44 chroot). No source build per policy.
+dnf install -y --repofrompath 'wlcpp,https://download.copr.fedorainfracloud.org/results/leloubil/wl-clip-persist/fedora-44-x86_64' \
+  --setopt='wlcpp.gpgcheck=1,wlcpp.gpgkey=https://download.copr.fedorainfracloud.org/results/leloubil/wl-clip-persist/pubkey.gpg' \
+  wl-clip-persist
 
 # Autostart inside the Wayland session. --clipboard regular only (all-selections breaks GTK
 # primary selection). Foreground daemon; XDG autostart backgrounds it for the session.
@@ -21,7 +17,7 @@ Type=Application
 Name=wl-clip-persist
 Comment=Keep the Wayland clipboard alive after the source app exits
 Exec=wl-clip-persist --clipboard regular
-OnlyShowIn=Budgie;
+OnlyShowIn=KDE;
 X-GNOME-Autostart-enabled=true
 NoDisplay=true
 EOF

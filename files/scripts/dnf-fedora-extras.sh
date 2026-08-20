@@ -7,6 +7,15 @@ set -euo pipefail
 # with Terra's yt-dlp-git - the conflict is gone with stable yt-dlp, so it's back.
 dnf install -y kitty fastfetch zsh gstreamer1 gstreamer1-plugins-base gstreamer1-plugins-good gstreamer1-plugins-good-extras gstreamer1-plugins-bad-free gstreamer1-plugins-bad-free-extras gstreamer1-vaapi ffmpegthumbnailer rsms-inter-fonts adwaita-fonts-all google-noto-sans-fonts google-noto-serif-fonts google-noto-mono-fonts google-noto-color-emoji-fonts ibm-plex-fonts-all terminus-fonts open-sans-fonts google-droid-sans-fonts google-droid-serif-fonts google-droid-sans-mono-fonts dejavu-fonts-all keepassxc loupe clapper zathura zathura-pdf-poppler 'nicotine+' yt-dlp mpv lollypop
 
+# Rust CLI utils (prebuilt Fedora packages, preferred over C/unsafe equivalents):
+# ripgrep (grep), fd-find (find), bat (cat), eza (ls), zoxide (cd), du-dust (du),
+# procs (ps). Verified present in Fedora 44 base/updates 2026-08-20.
+dnf install -y ripgrep fd-find bat eza zoxide du-dust procs
+# disk utility GUI (Dolphin + KDE Partition Manager cover the rest)
+dnf install -y gnome-disk-utility
+# wl-clipboard: wl-copy/wl-paste (Wayland clipboard CLI; wl-clip-persist's runtime pairing)
+dnf install -y wl-clipboard
+
 # perf/features (2026-08 batch): input remapping, display control, low-latency graphics,
 # AI/creative tooling (darktable/blender/kdenlive/easyeffects), gaming (lutris, protontricks),
 # sync/network apps, OBS Studio (obs-studio is now in Fedora 44; the distroav plugin comes

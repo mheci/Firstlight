@@ -3,10 +3,10 @@
 # image will be published to ghcr.io/<user>/<name>
 name: firstlight
 # description will be included in the image's metadata
-description: My personal Fedora image with NVIDIA open drivers and CUDA, built with BlueBuild.
+description: My personal Fedora Kinoite image with NVIDIA open drivers and CUDA, optimized for KDE Plasma 6, built with BlueBuild.
 
 # the base image to build on top of (FROM) and the version tag to use
-base-image: ghcr.io/blue-build/base-images/fedora-base
+base-image: ghcr.io/blue-build/base-images/fedora-kinoite
 image-version: "44" # pinned to Fedora 44 to match the fedora44 NVIDIA repos and avoid future breakage
 
 # module configuration, executed in order
@@ -16,6 +16,51 @@ modules:
     files:
       - source: system
         destination: / # copies files/system/* (* means everything inside it) into your image's root folder /
+
+  # minimal Plasma: strip stock Kinoite bloat that has no place on a focused gaming/creative
+  # desktop (PIM daemons, remote desktop, first-run wizards, CJK input stack blue-build adds).
+  # auto-remove is off: never cascade-remove something a wanted package happens to depend on.
+  - type: dnf
+    remove:
+      auto-remove: false
+      packages:
+        - akonadi-server
+        - akonadi-server-mysql
+        - audiocd-kio
+        - filelight
+        - kcharselect
+        - kde-connect
+        - kde-partitionmanager
+        - kdenetwork-filesharing
+        - kfind
+        - khelpcenter
+        - kio-gdrive
+        - kjournald
+        - kmenuedit
+        - krdp
+        - krfb
+        - kwalletmanager5
+        - kwrite
+        - plasma-disks
+        - plasma-drkonqi
+        - plasma-thunderbolt
+        - plasma-vault
+        - plasma-welcome
+        - samba-usershares
+        - thermald
+        - kamera
+        - kaccounts-integration-qt6
+        - kaccounts-providers
+        - kdebugsettings
+        - kdnssd
+        - kunifiedpush
+        - plasma-setup
+        - plasma-desktop-doc
+        - fcitx5
+        - fcitx5-configtool
+        - fcitx5-gtk
+        - fcitx5-qt
+        - kcm-fcitx5
 
   - type: dnf
     repos:
@@ -64,35 +109,30 @@ modules:
       - enable-terra.sh # Terra repo + mesa/extras subrepos bootstrap, priority=1
       - swap-mesa-terra.sh # mesa downgraded to Terra's build
       - enable-terra-multimedia.sh # fdk-aac (32-bit for steam), ffmpeg, gstreamer libav plugin
-      - dnf-terra-apps.sh # ejs, deno + Terra apps (lact/uupd/vicinae/t3code/opencode/budgie-extras) + terra-gamescope
+      - dnf-terra-apps.sh # ejs, deno + Terra apps (lact/uupd/vicinae/t3code/opencode/starship/bottom) + terra-gamescope
       - install-scx-schedulers.sh # scx-scheds + scx-tools (stable, Terra) + scx-manager (CachyOS addons COPR) + all-16-scheduler perf config
       - enable-rpmfusion.sh # RPM Fusion repos only (fallback)
-      - dnf-fedora-extras.sh # kitty, fastfetch, zsh, gstreamer stack, fonts, yt-dlp, mpv, lollypop, input-remapper, ddcutil, i2c-tools, obs-studio (+distroav), sync/creative tools
+      - dnf-fedora-extras.sh # kitty, fastfetch, zsh, gstreamer stack, fonts, yt-dlp, mpv, lollypop, rust utils, input-remapper, ddcutil, i2c-tools, obs-studio (+distroav), sync/creative tools
       - install-greenboot.sh # boot health checks + auto rollback (greenboot-rs, Fedora)
       - install-waterfox.sh # Waterfox browser (official BrowserWorks OBS repo, rpm)
       - install-llama-cpp.sh # llama.cpp with CUDA backend, prebuilt conda-forge binaries
-      - install-whisper-cpp.sh # whisper.cpp with CUDA backend (source build v1.9.2, no package exists)
-      - install-greetd.sh # greetd + gtkgreet/cage GUI greeter, multi-head via cage -m extend
-      - install-budgie-desktop.sh # Budgie Desktop 10.10 (Wayland/labwc) + labwc tools + wl-clipboard/cliphist + rofi
-      - install-nautilus.sh # nautilus + gnome-disk-utility + minimal gvfs (mtp, gphoto2)
-      - install-themes.sh # full Adwaita, adw-gtk3, Tela + Papirus icons, dconf dark defaults
+      - install-whisper-cpp.sh # whisper.cpp v1.9.2 (official prebuilt release tarball, no source build)
+      - install-kde-plasma.sh # KDE Plasma: Klassy/Darkly/bibata/breeze-plus/fluent themes + Vapor (bazzite COPR), kwin scripts enable, Plasma defaults
       - selinux-gaming.sh # SELinux booleans for Proton/Wine (execmod/execstack/execheap) via boot unit
       - install-open-webui.sh # Open WebUI (quadlet container) as llama.cpp frontend
       - install-glance.sh # Glance dashboard (systemd service)
       - install-noise-suppression.sh # RNNoise mic denoising (werman LADSPA, stereo) via pipewire filter-chain
       - install-cachyos-settings.sh # CachyOS tuned sysctls/udev/systemd (zram disabled - zswap preferred) + power-profiles-daemon
       - install-game-performance.sh # game-performance wrapper (perf profile + scx Gaming mode) + pci-latency service
-      - install-shader-cache.sh # system-wide shader cache caps (NVIDIA/Mesa/DXVK/vkd3d) via /etc/environment
+      - install-env-tweaks.sh # NVIDIA/GL/Qt shader caches + nvidia GLX vendor, system-wide via /etc/environment (coredumps disabled via files module)
       - install-ntsync.sh # autoload ntsync module - /dev/ntsync is world-rw (0666) once loaded
-      - install-wl-clip-persist.sh # clipboard survives app exit (cargo build v0.5.0) + autostart
+      - install-wl-clip-persist.sh # clipboard survives app exit (COPR prebuilt 0.4.1, no source build) + autostart
       - install-just.sh # just command runner (Fedora rust-just)
       - install-handlr-regex.sh # handlr-regex default-app handler (release binary)
       - install-ab-download-manager.sh # AB Download Manager (third-party COPR, 1.10.1)
       - install-proton-cachyos.sh # Proton-CachyOS Steam compat tool (baked tarball + per-user installer)
       - install-flameget.sh # FlameGet download manager (native from source, no Flatpak)
       - install-betterbird.sh # Betterbird mail client (native tarball to /opt, no Flatpak)
-      - install-midori.sh # Midori browser (project's Fedora RPM, no Flatpak)
-      - install-zen-adblocker.sh # Irbis Zen system-wide adblocker (tarball to /opt)
       - install-hermes.sh # Hermes Agent (Nous Research) AI agent CLI
       - install-blackbird.sh # blackbird OSINT CLI (venv in /opt/blackbird)
       - install-unsloth-desktop.sh # Unsloth Desktop (extracted from .deb, no rpm exists)

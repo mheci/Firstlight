@@ -1,29 +1,23 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# whisper.cpp v1.9.2 - CUDA-accelerated Whisper speech transcription. No Fedora,
-# RPM Fusion, or conda-forge package exists (verified), so build from source
-# against the CUDA toolkit installed by the dnf module. Pinned release tarball.
-dnf install -y cmake ninja-build
-
-# nvcc lives in /usr/local/cuda/bin (NVIDIA cuda-toolkit layout); not on PATH in containers
-if [ ! -x /usr/local/cuda/bin/nvcc ]; then
-  echo "ERROR: CUDA toolkit not found at /usr/local/cuda/bin/nvcc (is cuda-toolkit installed?)" >&2
-  exit 1
-fi
-export PATH=/usr/local/cuda/bin:$PATH
-
+# whisper.cpp v1.9.2 - official PREBUILT Linux x86_64 release tarball (no source
+# build): whisper-bin-ubuntu-x64.tar.gz, built on ubuntu-22.04 (glibc 2.35 ->
+# runs fine on Fedora 44's glibc 2.42), containing whisper-cli, whisper-server,
+# whisper-quantize, whisper-bench, libwhisper/libparakeet/libggml + the ggml CPU
+# variant libs (auto-selected per CPU at runtime). NOTE: the CUDA release assets
+# (whisper-cublas-*.zip) are Windows-only, verified - the only Linux CUDA path is
+# the ggml-org container image, which needs nvidia-container-toolkit at runtime.
+# The CPU build is the prebuilt choice per the no-source-builds policy.
 TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 
-curl -fsSL -o "$TMP/whisper.tar.gz" https://github.com/ggml-org/whisper.cpp/archive/refs/tags/v1.9.2.tar.gz
+curl -fL -o "$TMP/whisper.tar.gz" "https://github.com/ggml-org/whisper.cpp/releases/download/v1.9.2/whisper-bin-ubuntu-x64.tar.gz"
 tar -xzf "$TMP/whisper.tar.gz" -C "$TMP"
+WHISPER_DIR=$(find "$TMP" -maxdepth 2 -name whisper-cli -printf '%h\n' -quit)
 
-cmake -S "$TMP/whisper.cpp-1.9.2" -B "$TMP/build" -G Ninja \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc \
-  -DCMAKE_CUDA_FLAGS=-allow-unsupported-compiler \
-  -DGGML_CUDA=ON
-cmake --build "$TMP/build" --target whisper-cli whisper-server -j"$(nproc)"
-
-install -Dm755 "$TMP/build/bin/whisper-cli" "$TMP/build/bin/whisper-server" /usr/local/bin/
+install -Dm755 "$WHISPER_DIR/whisper-cli" "$WHISPER_DIR/whisper-server" "$WHISPER_DIR/whisper-quantize" "$WHISPER_DIR/whisper-bench" /usr/local/bin/
+install -Dm755 "$WHISPER_DIR/whisper-vad-speech-segments" "$WHISPER_DIR/parakeet-cli" /usr/local/bin/ 2>/dev/null || true
+# shared libs must land where the loader finds them (binaries are not rpath'd)
+install -Dm644 "$WHISPER_DIR"/libwhisper.so* "$WHISPER_DIR"/libparakeet.so* "$WHISPER_DIR"/libggml*.so* /usr/local/lib/
+ldconfig

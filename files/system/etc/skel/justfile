@@ -32,22 +32,24 @@ prevboot:
 
 # ─── Services ───────────────────────────────────────────────────────────────────
 services:
-    systemctl --no-pager status greetd open-webui glance scx_loader ananicy-cpp
+    systemctl --no-pager status sddm open-webui glance scx_loader ananicy-cpp
 
-# restart the login greeter
+# restart the login greeter (SDDM - Plasma's Wayland display manager)
 restart-greeter:
-    systemctl restart greetd
+    systemctl restart sddm
 
 # ─── Configurations ─────────────────────────────────────────────────────────────
-# refresh dconf/GTK theme defaults
-dconf-reload:
-    dconf update
+# reload KWin + plasmashell (apply kwinrc/plasma theme changes live)
+plasma-reload:
+    qdbus org.kde.KWin /KWin reconfigure
+    qdbus org.kde.plasmashell /PlasmaShell evaluateScript "print('reloaded')"
 
-# show active theme config
+# show active Plasma theme config (colors, icons, decorations)
 theme:
-    gsettings get org.gnome.desktop.interface gtk-theme
-    gsettings get org.gnome.desktop.interface icon-theme
-    gsettings get org.gnome.desktop.interface color-scheme
+    kreadconfig6 --file kdeglobals --group General --key ColorScheme
+    kreadconfig6 --file kdeglobals --group Icons --key Theme
+    kreadconfig6 --file kdeglobals --group KDE --key widgetStyle
+    kreadconfig6 --file kwinrc --group org.kde.kdecoration2 --key library
 
 # current SELinux booleans relevant to gaming
 selinux-gaming:
@@ -76,14 +78,14 @@ latency:
     ping -c 5 $(ip route | awk '/default/ {print $3; exit}')
 
 # ─── Privacy ────────────────────────────────────────────────────────────────────
-# clear per-user caches (nvidia/mesa shader caches, dxvk, cliphist, thumbnails)
+# clear per-user caches (nvidia/mesa shader caches, dxvk, klipper, thumbnails)
 clear-caches:
-    rm -rf ~/.cache/nvidia ~/.cache/mesa_shader_cache ~/.cache/dxvk ~/.cache/vkd3d-proton ~/.cache/cliphist ~/.cache/thumbnails
+    rm -rf ~/.cache/nvidia ~/.cache/mesa_shader_cache ~/.cache/dxvk ~/.cache/vkd3d-proton ~/.cache/thumbnails
     wl-copy --clear
 
-# wipe clipboard history entirely
-cliphist-wipe:
-    cliphist wipe
+# wipe Klipper clipboard history entirely
+klipper-wipe:
+    qdbus org.kde.klipper /klipper clearHistory
 
 # one-shot journal scrub (current boot only, keeps persistent logs)
 journal-scrub:
@@ -128,21 +130,21 @@ gpu-cache-clear id:
     rm -rf ~/.local/share/Steam/steamapps/compatdata/{{id}}/dxvk-cache
 
 # ─── Creative ───────────────────────────────────────────────────────────────────
-# screenshot the whole screen
+# screenshot the whole screen (Plasma's Spectacle)
 screenshot:
-    grim ~/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png
+    spectacle -b -f png -o ~/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png
 
-# screenshot an interactive region
+# screenshot an interactive region (Spectacle region selector)
 screenshot-region:
-    grim -g "$(slurp)" ~/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png
+    spectacle -b -r -f png -o ~/Pictures/screenshot-$(date +%Y%m%d-%H%M%S).png
 
-# record the screen (ffmpeg, wayland-capture via pipewire)
-record out=recording.mp4:
-    wf-recorder -o {{out}}
+# open Spectacle GUI (annotate/share)
+spectacle:
+    spectacle &
 
-# stop screen recording
-record-stop:
-    pkill -INT wf-recorder
+# record the screen with OBS Studio (Plasma-native, installed)
+record:
+    obs --startrecording
 
 # ─── AI ─────────────────────────────────────────────────────────────────────────
 # start llama-server (CUDA) on port 10000 with a model from /var/lib/llama/models

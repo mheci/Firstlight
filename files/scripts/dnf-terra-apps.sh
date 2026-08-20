@@ -12,7 +12,10 @@ dnf install -y deno
 # yt-dlp/mpv/bpftune were nightly (yt-dlp-git, mpv-nightly, bpftune-nightly); per user
 # decision all nightlies are now stable: yt-dlp + mpv from Fedora (dnf-fedora-extras),
 # bpftune dropped (no stable package exists in Fedora or Terra).
-dnf install -y faugus-launcher steam zed protonplus umu-launcher mission-center sniffnet ghostty t3code zsh-autocomplete iosevka-nerd-fonts cachyos-ananicy-rules ananicy-cpp superfile ScopeBuddy icoextract-thumbnailer lact uupd vicinae opencode budgie-extras noctalia
+dnf install -y faugus-launcher steam zed protonplus umu-launcher mission-center sniffnet ghostty t3code zsh-autocomplete iosevka-nerd-fonts cachyos-ananicy-rules ananicy-cpp superfile ScopeBuddy icoextract-thumbnailer lact uupd vicinae opencode
+# Rust CLI utils that aren't in Fedora 44 (verified against F44 primaries):
+# starship prompt, bottom system monitor (Terra).
+dnf install -y starship bottom
 
 # Stable Terra packages for the 2026-08 feature batch (none exist in Fedora 44 or
 # RPM Fusion - verified against both primaries): xpadneo, steamtinkerlaunch, NVIDIA

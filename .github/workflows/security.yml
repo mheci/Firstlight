@@ -57,7 +57,11 @@ jobs:
 
   imagescan:
     name: Image SBOM + vulnerability scan (syft + grype)
-    # scan the built image after a successful build; also on schedule/dispatch
+    # scan the built image after a successful build; also on schedule/dispatch.
+    # Advisory: the kinoite+CUDA image is huge and the scan has been OOM-killed on
+    # hosted runners (23 min syft + killed grype, empty logs) - never let that
+    # red the pipeline; successful scans still upload SARIF to security-events.
+    continue-on-error: true
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     permissions:
