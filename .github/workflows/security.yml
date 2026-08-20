@@ -35,6 +35,7 @@ jobs:
           path: results.sarif
           retention-days: 5
       - uses: github/codeql-action/upload-sarif@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd # v4.37.7
+        if: hashFiles('results.sarif') != ''
         with:
           sarif_file: results.sarif
 
@@ -78,5 +79,6 @@ jobs:
           output-format: sarif
           sarif: results.sarif
       - uses: github/codeql-action/upload-sarif@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd # v4.37.7
+        if: hashFiles('results.sarif') != ''
         with:
           sarif_file: results.sarif
