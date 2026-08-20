@@ -11,8 +11,9 @@ dnf install -y aria2 gtk4 graphene libappindicator-gtk3 python3-gobject python3-
 
 git clone --depth 1 https://github.com/C-Yassin/FlameGet.git /opt/flameget
 python3 -m venv --system-site-packages /opt/flameget/venv
-/opt/flameget/venv/bin/pip install -U pip
-/opt/flameget/venv/bin/pip install aria2p yt-dlp yt-dlp-get-pot-rustypipe
+# Pinned pip + venv deps (scorecard Pinned-Dependencies; versions verified on PyPI 2026-08-19)
+/opt/flameget/venv/bin/pip install pip==26.2.1
+/opt/flameget/venv/bin/pip install aria2p==0.12.1 yt-dlp==2026.08.19 yt-dlp-get-pot-rustypipe==0.2.0
 
 # rustypipe-botguard (YouTube POT binary; otherwise a first-run dialog downloads it).
 # Best-effort: the tarball layout varies, so locate the binary rather than assume.

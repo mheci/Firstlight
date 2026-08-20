@@ -60,9 +60,21 @@ dnf install -y sbsigntools xz
 SIGN_FILE=$(ls /usr/src/kernels/*/scripts/sign-file 2>/dev/null | head -n1)
 [ -n "$SIGN_FILE" ] || { echo "::error::sign-file not found under /usr/src/kernels (kernel-cachyos-devel not installed?)" >&2; exit 1; }
 
+# Sign ONLY the CachyOS kernels. The stock Fedora kernel must keep its Fedora
+# signature: shim trusts Fedora's cert, so it stays bootable BEFORE the MOK is
+# enrolled (the documented fallback to reach the OS and run mokutil --import).
+# Re-signing it with our key would leave Secure Boot refusing every kernel until
+# enrollment - an unrecoverable boot loop without disabling SB in firmware.
+CACHYOS_KVERS=$(rpm -q --qf '%{VERSION}-%{RELEASE}.%{ARCH}\n' 'kernel-cachyos*' 2>/dev/null || true)
+[ -n "$CACHYOS_KVERS" ] || { echo "::error::no kernel-cachyos releases found for signing" >&2; exit 1; }
+
 for kdir in /usr/lib/modules/*/; do
   kver=$(basename "$kdir")
   [ -f "$kdir/vmlinuz" ] || continue
+  case " $CACHYOS_KVERS " in
+    *" $kver "*) ;;
+    *) echo "Skipping non-cachyos kernel $kver (keeps its shipped signature)"; continue ;;
+  esac
   echo "Signing kernel + modules for $kver"
 
   if ! sbverify --cert "$MOK/cert.pem" "$kdir/vmlinuz" >/dev/null 2>&1; then

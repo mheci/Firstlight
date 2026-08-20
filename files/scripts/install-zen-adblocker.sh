@@ -4,10 +4,12 @@ set -euo pipefail
 # Irbis Zen - system-wide ad/tracker blocker (Wails/WebKitGTK desktop app running a local
 # proxy + local root CA; HTTPS filtering CA is trusted on first run). Not in Fedora/Terra/
 # Flathub; bake the tarball to /opt and ship a desktop entry (same pattern as zen-browser).
-# The archive contains a single `Zen` binary; the icon is a separate asset. Needs
-# webkit2gtk4.1 + gtk3, already present from the Unsloth Desktop install.
+# Pinned to v0.25.1 (unpinned `latest` downloads drift silently on rebuilds).
+# The archive contains a single `Zen` binary; the icon is a separate asset.
+# webkit2gtk4.1 + gtk3 are explicit here (do not rely on install-unsloth-desktop's dnf).
+dnf install -y webkit2gtk4.1 gtk3
 mkdir -p /opt/zen-adblocker
-curl -fL -o /tmp/zen.tar.gz "https://github.com/irbis-sh/zen-desktop/releases/latest/download/Zen_linux_amd64.tar.gz"
+curl -fL -o /tmp/zen.tar.gz "https://github.com/irbis-sh/zen-desktop/releases/download/v0.25.1/Zen_linux_amd64.tar.gz"
 tar -xzf /tmp/zen.tar.gz -C /opt/zen-adblocker
 chmod +x /opt/zen-adblocker/Zen
 ln -sf /opt/zen-adblocker/Zen /usr/local/bin/zen
