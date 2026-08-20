@@ -1,6 +1,6 @@
 [Unit]
 Description=Sign boot kernels with machine-local MOK key (Secure Boot)
-Documentation=file:///usr/local/sbin/firstlight-sb-sign
+Documentation=file:///usr/bin/firstlight-sb-sign
 After=local-fs.target
 ConditionPathIsReadWrite=/ostree
 ConditionPathExists=/sys/firmware/efi
@@ -8,7 +8,7 @@ ConditionPathExists=/sys/firmware/efi
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStart=/usr/local/sbin/firstlight-sb-sign
+ExecStart=/usr/bin/firstlight-sb-sign
 
 [Install]
 WantedBy=multi-user.target

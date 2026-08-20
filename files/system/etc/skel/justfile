@@ -173,11 +173,11 @@ webui-restart:
 # generate the machine MOK key (if needed), sign all CachyOS kernels + modules,
 # and queue the one-time MOK enrollment (reboot to complete)
 sb-setup:
-    sudo /usr/local/sbin/firstlight-sb-sign
+    sudo /usr/bin/firstlight-sb-sign
 
 # force the one-time MOK enrollment request (reboot -> Enroll MOK -> password)
 sb-enroll:
-    sudo /usr/local/sbin/firstlight-sb-sign
+    sudo /usr/bin/firstlight-sb-sign
 
 # Secure Boot / MOK status
 sb-status:
