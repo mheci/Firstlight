@@ -61,7 +61,7 @@ so the machine always boots even before the MOK is enrolled.
 
 ## Repo layout
 
-- `recipes/recipe.yml` — BlueBuild recipe (dnf module + remove-module + files module + ordered script modules + kargs + signing).
+- `recipes/recipe.yml` — BlueBuild recipe (dnf module + files module + ordered script modules [bloat removal first, then kernel, then app stack] + kargs + signing).
 - `files/scripts/*.sh` — one script per inclusion (Terra bootstrap, mesa swap, Plasma theming, apps, services, AI, etc.).
 - `files/system/*` — shipped config (sysctls, udev rules, systemd units, XDG autostart, KWin scripts, coredump disable, /etc/skel justfile).
 - `.github/workflows/` — `build.yml` (image), `security.yml` (Scorecard + SBOM + advisory image scan).

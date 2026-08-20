@@ -17,51 +17,6 @@ modules:
       - source: system
         destination: / # copies files/system/* (* means everything inside it) into your image's root folder /
 
-  # minimal Plasma: strip stock Kinoite bloat that has no place on a focused gaming/creative
-  # desktop (PIM daemons, remote desktop, first-run wizards, CJK input stack blue-build adds).
-  # auto-remove is off: never cascade-remove something a wanted package happens to depend on.
-  - type: dnf
-    remove:
-      auto-remove: false
-      packages:
-        - akonadi-server
-        - akonadi-server-mysql
-        - audiocd-kio
-        - filelight
-        - kcharselect
-        - kde-connect
-        - kde-partitionmanager
-        - kdenetwork-filesharing
-        - kfind
-        - khelpcenter
-        - kio-gdrive
-        - kjournald
-        - kmenuedit
-        - krdp
-        - krfb
-        - kwalletmanager5
-        - kwrite
-        - plasma-disks
-        - plasma-drkonqi
-        - plasma-thunderbolt
-        - plasma-vault
-        - plasma-welcome
-        - samba-usershares
-        - thermald
-        - kamera
-        - kaccounts-integration-qt6
-        - kaccounts-providers
-        - kdebugsettings
-        - kdnssd
-        - kunifiedpush
-        - plasma-setup
-        - plasma-desktop-doc
-        - fcitx5
-        - fcitx5-configtool
-        - fcitx5-gtk
-        - fcitx5-qt
-        - kcm-fcitx5
-
   - type: dnf
     repos:
       copr:
@@ -103,6 +58,7 @@ modules:
 
   - type: script
     scripts:
+      - install-minimal-plasma.sh # strip stock Kinoite bloat (tsflags=noscripts - their systemctl scriptlets fail in containers)
       - install-kernel-cachyos.sh # CachyOS kernel (noscripts + depmod), NVIDIA DKMS kmod
       - install-secureboot.sh # machine-local Secure Boot signing + MOK enrollment (firstlight-sb-sign service)
       - install-latest-tools.sh # bun + pi via bun (Terra's pi RPM is broken; opencode comes from Terra)
