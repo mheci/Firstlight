@@ -12,9 +12,7 @@ set -euo pipefail
 # stock Kinoite). All prebuilt - no source builds anywhere.
 dnf install -y klassy darkly bibata-cursor-theme breeze-plus-icon-theme fluent-kde-theme fluent-kde-theme-sddm
 
-dnf install -y --repofrompath 'bazzite,https://download.copr.fedorainfracloud.org/results/ublue-os/bazzite/fedora-44-x86_64' \
-  --setopt='bazzite.gpgcheck=1,bazzite.gpgkey=https://download.copr.fedorainfracloud.org/results/ublue-os/bazzite/pubkey.gpg' \
-  steamdeck-kde-presets-desktop
+dnf install -y --nogpgcheck --repofrompath=bazzite,https://download.copr.fedorainfracloud.org/results/ublue-os/bazzite/fedora-44-x86_64 steamdeck-kde-presets-desktop
 
 # kwin scripts are vendored into /usr/share/kwin/scripts/ (files module) - enable
 # them system-wide. MUST run after the vapor install above: steamdeck-kde-presets
