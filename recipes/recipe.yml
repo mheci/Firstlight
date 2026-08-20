@@ -58,7 +58,8 @@ modules:
 
   - type: script
     scripts:
-      - install-kernel-cachyos.sh # CachyOS kernel (noscripts + depmod), NVIDIA DKMS kmod, Secure Boot signing (MOK)
+      - install-kernel-cachyos.sh # CachyOS kernel (noscripts + depmod), NVIDIA DKMS kmod
+      - install-secureboot.sh # machine-local Secure Boot signing + MOK enrollment (firstlight-sb-sign service)
       - install-latest-tools.sh # bun + pi via bun (Terra's pi RPM is broken; opencode comes from Terra)
       - enable-terra.sh # Terra repo + mesa/extras subrepos bootstrap, priority=1
       - swap-mesa-terra.sh # mesa downgraded to Terra's build

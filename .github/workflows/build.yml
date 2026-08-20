@@ -32,29 +32,24 @@ jobs:
           - recipe.yml
     steps:
       # Checkout manually and skip the action's internal checkout (skip_checkout):
-      # the action's checkout resets the workspace from git, which would wipe the
-      # gitignored MOK private key injected below.
+      # the action's checkout resets the workspace from git, which would wipe any
+      # injected gitignored build files.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      # MOK signing key for the CachyOS kernel (Secure Boot). base64 PEM in the
-      # FIRSTLIGHT_MOK_KEY secret; the files module ships it into the image, and
-      # install-kernel-cachyos.sh signs the kernel + modules at build time.
-      - name: Inject MOK signing key
-        run: |
-          if [ -n "${{ secrets.FIRSTLIGHT_MOK_KEY }}" ]; then
-            mkdir -p files/system/etc/pki/firstlight-mok
-            echo "${{ secrets.FIRSTLIGHT_MOK_KEY }}" | base64 -d > files/system/etc/pki/firstlight-mok/priv.pem
-          fi
-      # the build is fully handled by the reusable github action
+      # the build is fully handled by the reusable github action.
+      # Pinned at 2f3ad44f (post-v1.12.0, 2026-07-30): v1.12.0's cosign-installer pin
+      # fails to fetch cosign after Sigstore rotated its release keys ("Fetched public
+      # key does not match expected digest"); this commit also adds the
+      # cosign_public_key input (not needed here - cosign.pub ships in the repo).
       - name: Build Custom Image
-        uses: blue-build/github-action@836161eb076426a451e6a0054f722b1153b8b3ad # v1.12.0
+        uses: blue-build/github-action@2f3ad44fe1c1f09d5144f69dc118baee7ca6b008 # v1.12.0+cosign fix
         with:
           recipe: ${{ matrix.recipe }}
           cosign_private_key: ${{ secrets.SIGNING_SECRET }}
           registry_token: ${{ github.token }}
           pr_event_number: ${{ github.event.number }}
-          skip_checkout: "true" # we checkout above so the injected MOK key survives
+          skip_checkout: "true" # we checkout above
 
           # enabled by default, disable if your image is small and you want faster builds
           maximize_build_space: true

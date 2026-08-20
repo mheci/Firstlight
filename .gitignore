@@ -3,4 +3,3 @@ cosign.private
 /Containerfile
 *.iso
 *.iso-CHECKSUM
-files/system/etc/pki/firstlight-mok/priv.pem

@@ -1,0 +1,121 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Firstlight machine-local Secure Boot signer.
+#
+# Signs the CachyOS kernel + modules of EVERY deployment on disk with a key that is
+# generated on THIS machine (never baked into the image), and queues one-time MOK
+# enrollment. Idempotent: once the key exists and is enrolled this becomes a no-op
+# apart from signing kernels staged by a bootc upgrade.
+#
+# - Runs automatically on every boot (firstlight-sb-sign.service) and manually via
+#   `just sb-setup` / `just sb-enroll`.
+# - Signs the on-disk copies under /ostree/deploy/*/deploy/* (writable) - never the
+#   read-only live /usr mount - so kernels are signed BEFORE the next boot.
+# - Signs ONLY kernels whose version string contains "cachyos": the stock Fedora
+#   kernel keeps its Fedora signature and remains the pre-enrollment fallback that
+#   shim can boot to reach this service.
+# - Modules are recompressed to .ko.xz after signing (signatures live on the
+#   uncompressed ELF, so they are decompressed in place, signed, then recompressed).
+
+KEYDIR=/var/lib/firstlight-mok
+KEY="$KEYDIR/priv.pem"
+CERT="$KEYDIR/cert.pem"
+CERT_DER="$KEYDIR/db.der"
+PASSFILE="$KEYDIR/enroll-password"
+PENDING="$KEYDIR/enroll-pending"
+MOTD=/etc/motd.d/99-firstlight-sb.conf
+
+# UEFI + Secure Boot enabled only
+[ -d /sys/firmware/efi ] || { echo "firstlight-sb-sign: non-UEFI system, skipping"; exit 0; }
+if ! mokutil --sb-state 2>/dev/null | grep -qi 'SecureBoot enabled'; then
+  echo "firstlight-sb-sign: Secure Boot is disabled - no signing needed"
+  rm -f "$PENDING" "$MOTD"
+  exit 0
+fi
+
+for t in sbsign sbverify openssl xz zstd; do
+  command -v "$t" >/dev/null || { echo "firstlight-sb-sign: missing required tool: $t" >&2; exit 1; }
+done
+SIGN_FILE=$(ls /usr/src/kernels/*/scripts/sign-file 2>/dev/null | head -n1 || true)
+[ -n "$SIGN_FILE" ] || { echo "firstlight-sb-sign: sign-file not found under /usr/src/kernels" >&2; exit 1; }
+
+# machine-local keypair, generated once (persists across bootc deployments in /var)
+if [ ! -f "$KEY" ] || [ ! -f "$CERT" ]; then
+  mkdir -p "$KEYDIR"
+  chmod 700 "$KEYDIR"
+  umask 077
+  openssl req -x509 -newkey rsa:4096 -keyout "$KEY" -out "$CERT" -days 10950 -nodes \
+    -subj "/O=Firstlight/CN=Firstlight Machine Owner Key" >/dev/null 2>&1
+  openssl x509 -in "$CERT" -outform DER -out "$CERT_DER"
+  echo "firstlight-sb-sign: generated machine MOK key at $KEYDIR"
+fi
+
+sign_kernel_dir() {
+  local kdir="$1" kver
+  [ -f "$kdir/vmlinuz" ] || return 0
+  kver=$(basename "$kdir")
+  case "$kver" in
+    *cachyos*) ;;
+    *) echo "firstlight-sb-sign: skipping $kver (keeps its shipped signature)"; return 0 ;;
+  esac
+
+  if ! sbverify --cert "$CERT" "$kdir/vmlinuz" >/dev/null 2>&1; then
+    sbsign --key "$KEY" --cert "$CERT" --output "$kdir/vmlinuz.signed" "$kdir/vmlinuz" >/dev/null 2>&1
+    mv -f "$kdir/vmlinuz.signed" "$kdir/vmlinuz"
+    echo "firstlight-sb-sign: signed kernel $kver"
+  fi
+
+  # decompress in place, sign every module once (skip ones already signed by us),
+  # then recompress to .ko.xz to keep image sizes down
+  find "$kdir" -name '*.ko.xz' -print0 | xargs -0 -r -n1 xz -d 2>/dev/null || true
+  find "$kdir" -name '*.ko.zst' -print0 | xargs -0 -r -n1 zstd -d -f 2>/dev/null || true
+  while IFS= read -r -d '' f; do
+    if ! sbverify --cert "$CERT" "$f" >/dev/null 2>&1; then
+      "$SIGN_FILE" sha256 "$KEY" "$CERT_DER" "$f" >/dev/null 2>&1 || true
+    fi
+  done < <(find "$kdir" -name '*.ko' -print0)
+  find "$kdir" -name '*.ko' -print0 | xargs -0 -r -n1 xz -f 2>/dev/null || true
+}
+
+# every deployment on disk (current one included, via its writable on-disk path)
+found=0
+for d in /ostree/deploy/*/deploy/*/usr/lib/modules/*/; do
+  [ -d "$d" ] || continue
+  found=1
+  sign_kernel_dir "$d"
+done
+if [ "$found" -eq 0 ]; then
+  echo "firstlight-sb-sign: no deployments under /ostree/deploy found - nothing to sign"
+fi
+
+# enrollment: one-time, completed by rebooting into the MOK manager
+if mokutil --test-key "$CERT_DER" >/dev/null 2>&1; then
+  rm -f "$PENDING" "$MOTD"
+  echo "firstlight-sb-sign: MOK key already enrolled"
+  exit 0
+fi
+
+if [ -f "$PENDING" ]; then
+  echo "firstlight-sb-sign: MOK enrollment already requested - REBOOT to complete it"
+  echo "  (mokutil --list-new to check; you may also run: just sb-enroll)"
+  exit 0
+fi
+
+umask 077
+if [ ! -f "$PASSFILE" ]; then
+  openssl rand -base64 12 2>/dev/null | tr -d '/+=' | cut -c1-16 > "$PASSFILE"
+fi
+password=$(cat "$PASSFILE")
+printf '%s\n%s\n' "$password" "$password" | mokutil --import "$CERT_DER" >/dev/null
+touch "$PENDING"
+mkdir -p /etc/motd.d
+cat > "$MOTD" <<EOF
+Secure Boot: Firstlight wants to enroll its machine key (one time only).
+  Reboot now (sudo reboot). The MOK Manager appears before boot -> choose
+  "Enroll MOK" -> accept -> enter the password: $password
+  After that, the CachyOS kernel and all modules boot signed on this machine.
+  Manage later with: just sb-setup / just sb-status
+EOF
+echo "firstlight-sb-sign: MOK enrollment queued - REBOOT to complete it (one-time)"
+echo "firstlight-sb-sign: enrollment password: $password"

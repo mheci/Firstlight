@@ -169,6 +169,24 @@ webui:
 webui-restart:
     systemctl restart open-webui
 
+# ─── Secure Boot ─────────────────────────────────────────────────────────────────
+# generate the machine MOK key (if needed), sign all CachyOS kernels + modules,
+# and queue the one-time MOK enrollment (reboot to complete)
+sb-setup:
+    sudo /usr/local/sbin/firstlight-sb-sign
+
+# force the one-time MOK enrollment request (reboot -> Enroll MOK -> password)
+sb-enroll:
+    sudo /usr/local/sbin/firstlight-sb-sign
+
+# Secure Boot / MOK status
+sb-status:
+    echo "== Secure Boot ==" && mokutil --sb-state
+    echo "== Machine key ==" && ls -l /var/lib/firstlight-mok/ 2>/dev/null || echo "no key yet - run: just sb-setup"
+    echo "== Key enrolled? ==" && (sudo mokutil --test-key /var/lib/firstlight-mok/db.der && echo "ENROLLED") || echo "NOT ENROLLED"
+    echo "== Pending enrollments ==" && sudo mokutil --list-new 2>/dev/null || true
+    echo "== Signed kernels ==" && sudo sbverify --cert /var/lib/firstlight-mok/cert.pem /ostree/deploy/*/deploy/*/usr/lib/modules/*cachyos*/vmlinuz 2>/dev/null | grep -E 'signature|vmlinuz' || echo "no cachyos kernels found"
+
 # ─── Misc ───────────────────────────────────────────────────────────────────────
 waterfox:
     waterfox &
