@@ -4,7 +4,7 @@ Firstlight is a personal Fedora 44 Atomic (bootc) image: **Fedora Kinoite (KDE P
 
 ## Highlights
 
-- **Desktop**: KDE Plasma 6 (Kinoite base) — minimal/decluttered (stock Kinoite bloat stripped: PIM daemons, remote-desktop servers, first-run wizards, CJK input stack). Themes: **Klassy** (window decorations), **Darkly** (widget style), **Bibata** cursors, **Breeze-Plus** icons, **Fluent** look-and-feel, **Vapor** (Steam Deck look, from the Bazzite COPR) — all prebuilt RPMs, defaults applied image-wide.
+- **Desktop**: KDE Plasma 6 (Kinoite base, stock package set). Themes: **Klassy** (window decorations), **Darkly** (widget style), **Bibata** cursors, **Breeze-Plus** icons, **Fluent** look-and-feel, **Vapor** (Steam Deck look, from the Bazzite COPR) — all prebuilt RPMs, defaults applied image-wide.
 - **KWin scripts** (vendored, enabled system-wide): **Krohnkite** dynamic tiling + **Alt-F4 Desktop** (Alt+F4 on the desktop shows the logout prompt).
 - **Login**: SDDM (Plasma's Wayland display manager).
 - **Graphics**: NVIDIA open kernel modules (`kmod-nvidia-open-dkms`, DKMS-built for every kernel) + CUDA toolkit (NVIDIA fedora44 repo), Terra mesa (full codec + amdgpu-virtio build) via priority, system-wide shader cache tuning (`/etc/environment` incl. NVIDIA GL cache sizing + Qt shader caches), NVIDIA GLX vendor forced.
@@ -61,7 +61,7 @@ so the machine always boots even before the MOK is enrolled.
 
 ## Repo layout
 
-- `recipes/recipe.yml` — BlueBuild recipe (dnf module + files module + ordered script modules [bloat removal first, then kernel, then app stack] + kargs + signing).
+- `recipes/recipe.yml` — BlueBuild recipe (dnf module + files module + ordered script modules + kargs + signing).
 - `files/scripts/*.sh` — one script per inclusion (Terra bootstrap, mesa swap, Plasma theming, apps, services, AI, etc.).
 - `files/system/*` — shipped config (sysctls, udev rules, systemd units, XDG autostart, KWin scripts, coredump disable, /etc/skel justfile).
 - `.github/workflows/` — `build.yml` (image), `security.yml` (Scorecard + SBOM + advisory image scan).

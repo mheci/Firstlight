@@ -58,7 +58,6 @@ modules:
 
   - type: script
     scripts:
-      - install-minimal-plasma.sh # strip stock Kinoite bloat (tsflags=noscripts - their systemctl scriptlets fail in containers)
       - install-kernel-cachyos.sh # CachyOS kernel (noscripts + depmod), NVIDIA DKMS kmod
       - install-secureboot.sh # machine-local Secure Boot signing + MOK enrollment (firstlight-sb-sign service)
       - install-latest-tools.sh # bun + pi via bun (Terra's pi RPM is broken; opencode comes from Terra)
